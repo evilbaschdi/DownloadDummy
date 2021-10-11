@@ -1,21 +1,25 @@
 ﻿using System;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using DownloadDummy.Core;
 
 namespace DownloadDummy
 {
-    class Program
+    static class Program
     {
-        static void Main(string[] args)
+        // ReSharper disable once UnusedParameter.Local
+        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
+        static async Task Main()
         {
             Console.WriteLine("Start");
             Console.WriteLine();
 
-            using WebClient webClient = new WebClient();
-            var link = "http://ssd.samsungsemi.com/ecomobile/ssd/update15.do?fname=/Samsung_NVM_Express_Driver_3.3.exe";
-            var file = $@"{Directory.GetCurrentDirectory()}\Samsung_NVM_Express_Driver_3.3.exe";
+            const string link = "https://download01.logi.com/web/ftp/pub/techsupport/options/Options_9.20.389.exe";
+            var file = $@"{Directory.GetCurrentDirectory()}\Options_9.20.389.exe";
+
+            var client = new HttpClient();
 
             var isValid = false;
 
@@ -25,7 +29,12 @@ namespace DownloadDummy
                 {
                     Console.WriteLine($"{DateTime.Now:s}");
                     Console.WriteLine($"Try to download from '{link}'");
-                    webClient.DownloadFile(new Uri(link), file);
+
+                    var response = await client.GetAsync(link);
+                    await using (var fs = new FileStream(file, FileMode.CreateNew))
+                    {
+                        await response.Content.CopyToAsync(fs);
+                    }
 
                     isValid = ExeChecker.IsValidExe(file);
                     Console.WriteLine();
@@ -34,8 +43,12 @@ namespace DownloadDummy
                     {
                         Console.WriteLine("File not valid. Retry in one minute.");
                         File.Delete(file);
-                        Thread.Sleep((int) TimeSpan.FromMinutes(1).TotalMilliseconds);
+                        Thread.Sleep((int)TimeSpan.FromMinutes(1).TotalMilliseconds);
                         Console.WriteLine();
+                    }
+                    else
+                    {
+                        Console.WriteLine(file);
                     }
                 }
                 catch (Exception)
@@ -43,7 +56,6 @@ namespace DownloadDummy
                     // ignored
                 }
             }
-
 
             Console.WriteLine($"End: {DateTime.Now:s}");
         }

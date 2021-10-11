@@ -1,5 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 
+// ReSharper disable All
+
 namespace DownloadDummy.Core
 {
     [StructLayout(LayoutKind.Sequential)]
