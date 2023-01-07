@@ -1,63 +1,40 @@
-﻿using System;
-using System.IO;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using DownloadDummy.Core;
+﻿namespace DownloadDummy;
 
-namespace DownloadDummy
+static class Program
 {
-    static class Program
+    // ReSharper disable once UnusedParameter.Local
+    // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
+    static async Task Main()
     {
-        // ReSharper disable once UnusedParameter.Local
-        // ReSharper disable once ParameterOnlyUsedForPreconditionCheck.Local
-        static async Task Main()
+        Console.WriteLine("Start");
+        Console.WriteLine();
+
+        var client = new HttpClient();
+
+        for (int i = 0; i < 10000; i++)
         {
-            Console.WriteLine("Start");
-            Console.WriteLine();
-
-            const string link = "https://download01.logi.com/web/ftp/pub/techsupport/options/Options_9.20.389.exe";
-            var file = $@"{Directory.GetCurrentDirectory()}\Options_9.20.389.exe";
-
-            var client = new HttpClient();
-
-            var isValid = false;
-
-            while (!isValid)
+            var fileName = $"{i}.gif";
+            var link = $"https://www.martin-perscheid.de/image/cartoon/{fileName}";
+            var file = $@"{Directory.GetCurrentDirectory()}\{fileName}";
+            try
             {
-                try
+                Console.WriteLine($"{DateTime.Now:s}");
+                Console.WriteLine($"Try to download from '{link}'");
+
+                var response = await client.GetAsync(link);
+                await using (var fs = new FileStream(file, FileMode.CreateNew))
                 {
-                    Console.WriteLine($"{DateTime.Now:s}");
-                    Console.WriteLine($"Try to download from '{link}'");
-
-                    var response = await client.GetAsync(link);
-                    await using (var fs = new FileStream(file, FileMode.CreateNew))
-                    {
-                        await response.Content.CopyToAsync(fs);
-                    }
-
-                    isValid = ExeChecker.IsValidExe(file);
-                    Console.WriteLine();
-
-                    if (!isValid)
-                    {
-                        Console.WriteLine("File not valid. Retry in one minute.");
-                        File.Delete(file);
-                        Thread.Sleep((int)TimeSpan.FromMinutes(1).TotalMilliseconds);
-                        Console.WriteLine();
-                    }
-                    else
-                    {
-                        Console.WriteLine(file);
-                    }
+                    await response.Content.CopyToAsync(fs);
                 }
-                catch (Exception)
-                {
-                    // ignored
-                }
+
+                Console.WriteLine();
             }
-
-            Console.WriteLine($"End: {DateTime.Now:s}");
+            catch (Exception)
+            {
+                // ignored
+            }
         }
+
+        Console.WriteLine($"End: {DateTime.Now:s}");
     }
 }
